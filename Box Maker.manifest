@@ -1,0 +1,13 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"addin",
+	"id":	"af004c0b-7e4b-416b-bfa2-e84056d153dc",
+	"author":	"Daniel Neve",
+	"description":	{
+		"":	""
+	},
+	"version":	"0.1",
+	"runOnStartup":	true,
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true
+}
