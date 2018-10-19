@@ -2,11 +2,6 @@ import math
 import adsk.core
 from . import value
 
-def Print( message ):
-    app = adsk.core.Application.get()
-    ui = app.userInterface
-    ui.messageBox( message )
-
 # Event handler for the execute event.
 class Handler( adsk.core.CommandEventHandler ):
     def __init__( self ):
@@ -166,6 +161,30 @@ class Handler( adsk.core.CommandEventHandler ):
         midB = adsk.core.Point3D.create( *self.CalcMidPoint( b ) )
         
         return midA.isEqualTo( midB )
+        
+    def CalculateEdgeDirection( self, edge ):
+        return edge.startVertex.geometry.vectorTo( edge.endVertex.geometry )
+        
+    def AreEdgesInTheSameDirection( self, a, b ):
+        dirA = self.CalculateEdgeDirection( a )
+        dirB = self.CalculateEdgeDirection( b )
+        
+        dirA.normalize()
+        dirB.normalize()
+        
+        dp = dirA.dotProduct( dirB )
+        
+        return math.isclose( 1, dp )
+
+    def VectorToString( self, vector ):
+        return "X:{0} Y:{1} Z:{2}".format( vector.x, vector.y, vector.z )
+
+    def EdgeToString( self, edge ):
+        output  = "Start: " + self.VectorToString( edge.startVertex.geometry )
+        output += "\n"
+        output += "End  : " + self.VectorToString( edge.endVertex.geometry )
+        
+        return output
 
     def Join( self, root, componentA, componentB, axis ):
         edgesA = self.FindBRepCurvesOnAxis( componentA, axis )
@@ -174,24 +193,17 @@ class Handler( adsk.core.CommandEventHandler ):
         for edgeA in edgesA:
             for edgeB in edgesB:
                 if self.AreMidPointsEqual( edgeA, edgeB ):
+                    
                     joinA = adsk.fusion.JointGeometry.createByCurve( edgeA, adsk.fusion.JointKeyPointTypes.MiddleKeyPoint )
                     joinB = adsk.fusion.JointGeometry.createByCurve( edgeB, adsk.fusion.JointKeyPointTypes.MiddleKeyPoint )
                     
-                    #jointInput = root.joints.createInput( joinA, joinB )
-                    #jointInput.setAsRigidJointMotion()
-                    #root.joints.add( jointInput )
-
-                    a1 = edgeA.startVertex.geometry
-                    a2 = edgeA.endVertex.geometry
-                    amx, amy, amz = self.CalcMidPoint( edgeA )
+                    print( self.EdgeToString( edgeA ) )
+                    print( self.EdgeToString( edgeB ) )
                     
-                    b1 = edgeB.startVertex.geometry
-                    b2 = edgeB.endVertex.geometry
-                    bmx, bmy, bmz = self.CalcMidPoint( edgeB )
-                    
-                    output = "A:\nStart: {0}, {1}, {2}\nEnd: {3}, {4}, {5}\nMid: {6}, {7}, {8}".format( a1.x, a1.y, a1.z, a2.x, a2.y, a2.z, amx, amy, amz )
-                    output += "\n\nB:\nStart: {0}, {1}, {2}\nEnd: {3}, {4}, {5}\nMid: {6}, {7}, {8}".format( b1.x, b1.y, b1.z, b2.x, b2.y, b2.z, bmx, bmy, bmz )
-                    Print( output )
+                    jointInput = root.joints.createInput( joinA, joinB )
+                    jointInput.isFlipped = not self.AreEdgesInTheSameDirection( edgeA, edgeB )
+                    jointInput.setAsRigidJointMotion()
+                    root.joints.add( jointInput )
                     
                     return
         
@@ -218,10 +230,10 @@ class Handler( adsk.core.CommandEventHandler ):
         
         transform = adsk.core.Matrix3D.create()
         transform.setCell( 0, 3, width - materialThickness )
-        #Print( "Pie: {0} = {1} - {2}".format( transform.translation.x, width, materialThickness ) )
-        root.occurrences.addExistingComponent( side, transform )
-        
+        sideBOccurrence = root.occurrences.addExistingComponent( side, transform )
+
         self.Join( root, base, side, adsk.core.Point3D.create( 0, 0, 1 ) )
+        self.Join( root, base, sideBOccurrence, adsk.core.Point3D.create( 0, 0, 1 ) )
         
      except:
         app = adsk.core.Application.get()

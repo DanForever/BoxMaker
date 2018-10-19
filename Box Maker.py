@@ -23,7 +23,6 @@ def stop(context):
     try:
         global _cmd, _ui
         _cmd.Stop()
-        _ui.messageBox('Stop box maker')
 
     except:
         if _ui:
