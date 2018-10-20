@@ -66,10 +66,7 @@ class Handler( adsk.core.CommandEventHandler ):
         
         tabCount, tabLength = self.CalculateTabLength( x )
         
-        #Print( "TabCount={0}, TabLength={1} - from X = {2}".format( tabCount, tabLength, x ) )
-        
         centres = []
-        centreStr = "Tab centres:\n"
         
         tabX = 0
         for i in range( tabCount ):
@@ -82,11 +79,7 @@ class Handler( adsk.core.CommandEventHandler ):
 
             # We are only interested in extruding every other tab (so ignore evens)
             if i % 2 != 0:
-                centres.append( centre );
-            
-            centreStr += "{0} = {1}\n".format( i, centre )
-
-        centreStr += "\nProfile Centres:\n"
+                centres.append( centre )
         
         profiles = adsk.core.ObjectCollection.create()   
 
@@ -107,10 +100,6 @@ class Handler( adsk.core.CommandEventHandler ):
                     if math.isclose( middleX, centreX ):
                         profiles.add( profile )
                         break
-            
-            centreStr += "{0} = {1} (Y = {2})\n".format( i, middleX, middleY )
-
-        #Print( centreStr );
         
         # Create an extrusion input for the profile.
         features = component.features
@@ -186,7 +175,7 @@ class Handler( adsk.core.CommandEventHandler ):
         
         return output
 
-    def Join( self, root, componentA, componentB, axis ):
+    def Join( self, root, componentA, componentB, axis, offset = 0 ):
         edgesA = self.FindBRepCurvesOnAxis( componentA, axis )
         edgesB = self.FindBRepCurvesOnAxis( componentB, axis )
         
@@ -201,6 +190,7 @@ class Handler( adsk.core.CommandEventHandler ):
                     print( self.EdgeToString( edgeB ) )
                     
                     jointInput = root.joints.createInput( joinA, joinB )
+                    jointInput.offset = adsk.core.ValueInput.createByReal( offset )
                     jointInput.isFlipped = not self.AreEdgesInTheSameDirection( edgeA, edgeB )
                     jointInput.setAsRigidJointMotion()
                     root.joints.add( jointInput )
@@ -229,11 +219,10 @@ class Handler( adsk.core.CommandEventHandler ):
         side = self.CreateSide( root, length, height, materialThickness )
         
         transform = adsk.core.Matrix3D.create()
-        transform.setCell( 0, 3, width - materialThickness )
         sideBOccurrence = root.occurrences.addExistingComponent( side, transform )
 
         self.Join( root, base, side, adsk.core.Point3D.create( 0, 0, 1 ) )
-        self.Join( root, base, sideBOccurrence, adsk.core.Point3D.create( 0, 0, 1 ) )
+        self.Join( root, side, sideBOccurrence, adsk.core.Point3D.create( 1, 0, 0 ), -( width - materialThickness ) )
         
      except:
         app = adsk.core.Application.get()
