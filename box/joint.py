@@ -1,0 +1,88 @@
+import math
+
+import adsk.core
+
+def FindCurvesOnAxis( component, axis ):
+	edges = []
+	
+	for iB in range( component.bRepBodies.count ):
+		body = component.bRepBodies.item( iB )
+		
+		for iE in range( body.edges.count ):
+			edge = body.edges.item( iE )
+			
+			xIsClose = math.isclose( edge.startVertex.geometry.x, edge.endVertex.geometry.x )
+			yIsClose = math.isclose( edge.startVertex.geometry.y, edge.endVertex.geometry.y )
+			zIsClose = math.isclose( edge.startVertex.geometry.z, edge.endVertex.geometry.z )
+
+			x = ( axis.x > 0 and not xIsClose ) or ( axis.x == 0 and xIsClose )
+			y = ( axis.y > 0 and not yIsClose ) or ( axis.y == 0 and yIsClose )
+			z = ( axis.z > 0 and not zIsClose ) or ( axis.z == 0 and zIsClose )
+			
+			if x and y and z:
+				edges.append( edge )
+
+	return edges
+
+def CalcMidPoint( edge ):
+	x = ( edge.startVertex.geometry.x + edge.endVertex.geometry.x ) / 2
+	y = ( edge.startVertex.geometry.y + edge.endVertex.geometry.y ) / 2
+	z = ( edge.startVertex.geometry.z + edge.endVertex.geometry.z ) / 2
+	
+	return x, y, z
+	
+def AreMidPointsEqual( a, b ):
+	midA = adsk.core.Point3D.create( *CalcMidPoint( a ) )
+	midB = adsk.core.Point3D.create( *CalcMidPoint( b ) )
+	
+	return midA.isEqualTo( midB )
+
+def CalculateEdgeDirection( edge ):
+	return edge.startVertex.geometry.vectorTo( edge.endVertex.geometry )
+
+def AreEdgesInTheSameDirection( a, b ):
+	dirA = CalculateEdgeDirection( a )
+	dirB = CalculateEdgeDirection( b )
+	
+	dirA.normalize()
+	dirB.normalize()
+	
+	dp = dirA.dotProduct( dirB )
+	
+	return math.isclose( 1, dp )
+
+def VectorToString( vector ):
+	return "X:{0} Y:{1} Z:{2}".format( vector.x, vector.y, vector.z )
+
+def EdgeToString( edge ):
+	output  = "Start: " + VectorToString( edge.startVertex.geometry )
+	output += "\n"
+	output += "End  : " + VectorToString( edge.endVertex.geometry )
+	
+	return output
+
+def Join( parent, partA, partB, axis, offset = 0 ):
+	
+	componentA = partA.component
+	componentB = partB.component
+	
+	edgesA = FindCurvesOnAxis( componentA, axis )
+	edgesB = FindCurvesOnAxis( componentB, axis )
+	
+	for edgeA in edgesA:
+		for edgeB in edgesB:
+			if AreMidPointsEqual( edgeA, edgeB ):
+				
+				joinA = adsk.fusion.JointGeometry.createByCurve( edgeA, adsk.fusion.JointKeyPointTypes.MiddleKeyPoint )
+				joinB = adsk.fusion.JointGeometry.createByCurve( edgeB, adsk.fusion.JointKeyPointTypes.MiddleKeyPoint )
+				
+				print( EdgeToString( edgeA ) )
+				print( EdgeToString( edgeB ) )
+				
+				jointInput = parent.joints.createInput( joinA, joinB )
+				jointInput.offset = adsk.core.ValueInput.createByReal( offset )
+				jointInput.isFlipped = not AreEdgesInTheSameDirection( edgeA, edgeB )
+				jointInput.setAsRigidJointMotion()
+				parent.joints.add( jointInput )
+				
+				return

@@ -1,9 +1,9 @@
 import adsk.core
 
-from . import create
+from . import handlers
 from . import value
 
-class Command():
+class Box():
     def __init__( self ):
         self.handlers = []
         
@@ -16,7 +16,7 @@ class Command():
         if not cmdDef:
             cmdDef = self.ui.commandDefinitions.addButtonDefinition( value.command.id, value.command.name, value.command.tooltip )
         
-        handler = create.Handler()
+        handler = handlers.Create()
         cmdDef.commandCreated.add( handler )
         self.handlers.append( handler )
         
