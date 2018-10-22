@@ -17,7 +17,7 @@ class Base():
 		
 		self.component = utility.CreateComponent( self.parent, "Base" )
 		
-		constructionPlane = self.component.xZConstructionPlane
+		constructionPlane = self.parent.xZConstructionPlane
 		
 		self.sketch = sketch.Sketch()
 		self.sketch.Create( self.component, constructionPlane, parameters.width, parameters.length )
@@ -38,7 +38,7 @@ class Side():
 		
 		self.component = utility.CreateComponent( self.parent, "Side" )
 		
-		constructionPlane = self.component.yZConstructionPlane
+		constructionPlane = self.parent.yZConstructionPlane
 		
 		self.sketch = sketch.Sketch()
 		self.sketch.Create( self.component, constructionPlane, parameters.length, parameters.height )
@@ -58,3 +58,25 @@ class Side():
 		side.component = self.parent.occurrences.addExistingComponent( self.component, transform )
 		
 		return side
+		
+class Top():
+	def __init__( self ):
+		self.parent = None
+		self.component = None
+		
+		self.sketch = None
+		self.body = None
+		
+	def Create( self, parent, parameters ):
+		self.parent = parent
+		
+		self.component = utility.CreateComponent( self.parent, "Top" )
+		
+		constructionPlane = self.parent.xYConstructionPlane
+		
+		self.sketch = sketch.Sketch()
+		self.sketch.Create( self.component, constructionPlane, parameters.width, parameters.height )
+		self.sketch.AddTabsAlongBottom( parameters.materialThickness )
+		
+		self.body = body.Body()
+		self.body.Extrude( self.component, self.sketch, -parameters.materialThickness )

@@ -20,7 +20,7 @@ class Box():
         cmdDef.commandCreated.add( handler )
         self.handlers.append( handler )
         
-        # Get the ADD-INS panel in the model workspace. 
+        # Get the ADD-INS panel in the model workspace.
         addInsPanel = self.ui.allToolbarPanels.itemById( value.command.panelId )
         
         # Add the button to the bottom of the panel.

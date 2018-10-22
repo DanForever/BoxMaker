@@ -29,17 +29,24 @@ class Execute( adsk.core.CommandEventHandler ):
 			
 			root = utility.CreateComponent( design.activeComponent, parameters.name )
 			
+			print( "\nCreating Base:" )
 			base = part.Base()
 			base.Create( root, parameters )
 			
+			print( "\nCreating Side:" )
 			side = part.Side()
 			side.Create( root, parameters )
-			
 			joint.Join( root, base, side, adsk.core.Point3D.create( 0, 0, 1 ) )
 			
+			print( "\nCreating Side2:" )
 			side2 = side.Clone()
-			offset = -( parameters.width - parameters.materialThickness )
-			joint.Join( root, side, side2, adsk.core.Point3D.create( 1, 0, 0 ), offset )
+			offset = ( parameters.width - parameters.materialThickness )
+			joint.Join( root, side2, side, adsk.core.Point3D.create( 1, 0, 0 ), offset )
+			
+			print( "\nCreating Top:" )
+			top = part.Top()
+			top.Create( root, parameters )
+			joint.Join( root, base, top, adsk.core.Point3D.create( 1, 0, 0 ) )
 			
 		except:
 			import traceback

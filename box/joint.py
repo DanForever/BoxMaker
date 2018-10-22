@@ -63,14 +63,33 @@ def EdgeToString( edge ):
 
 def Join( parent, partA, partB, axis, offset = 0 ):
 	
+	print( "Joining {} -> {}".format( partA.component.name, partB.component.name ) )
+	
 	componentA = partA.component
 	componentB = partB.component
 	
 	edgesA = FindCurvesOnAxis( componentA, axis )
 	edgesB = FindCurvesOnAxis( componentB, axis )
 	
+	print( "Found {} edges on {} as potential joint targets".format( len( edgesA ), partA.component.name ) )
+	print( "Found {} edges on {} as potential joint targets".format( len( edgesB ), partB.component.name ) )
+	
 	for edgeA in edgesA:
 		for edgeB in edgesB:
+			
+			#print \
+			#(
+			#	"Comparing {} {}->{} against {} {}->{}".format
+			#	(
+			#		partA.component.name,
+			#		VectorToString( edgeA.startVertex.geometry ),
+			#		VectorToString( edgeA.endVertex.geometry ),
+			#		partB.component.name,
+			#		VectorToString( edgeB.startVertex.geometry ),
+			#		VectorToString( edgeB.endVertex.geometry ),
+			#	)
+			#)
+			
 			if AreMidPointsEqual( edgeA, edgeB ):
 				
 				joinA = adsk.fusion.JointGeometry.createByCurve( edgeA, adsk.fusion.JointKeyPointTypes.MiddleKeyPoint )
