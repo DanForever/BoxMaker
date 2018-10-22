@@ -76,7 +76,7 @@ class Top():
 		
 		self.sketch = sketch.Sketch()
 		self.sketch.Create( self.component, constructionPlane, parameters.width, parameters.height )
-		self.sketch.AddTabsAlongBottom( parameters.materialThickness )
+		self.sketch.AddTabsAlongBottomAndSides( parameters.materialThickness )
 		
 		self.body = body.Body()
 		self.body.Extrude( self.component, self.sketch, -parameters.materialThickness )

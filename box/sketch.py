@@ -3,6 +3,8 @@ import adsk.core
 
 import math
 
+from . import utility
+
 class Sketch():
 	def __init__( self ):
 		self.parent = None
@@ -12,20 +14,45 @@ class Sketch():
 		self.y = 0
 		
 		self.mainProfile = None
-		self.lowerTabProfiles = []
+		self.profilesToIgnore = []
+		self.profilesToExtrude = []
 		
-		self.lowerTabHeight = 0
-		self.lowerTabCentres = []
+		self.centresToIgnore = []
+		self.centresToExtrude = []
 		
 	def GetProfilesToExtrude( self ):
 		profiles = adsk.core.ObjectCollection.create()
 		
 		profiles.add( self.mainProfile )
 		
-		for profile in self.lowerTabProfiles:
+		for profile in self.profilesToExtrude:
 			profiles.add( profile )
 		
 		return profiles
+	
+	def _AnalyseProfiles( self ):
+		self.mainProfile = None
+		self.profilesToIgnore = []
+		self.profilesToExtrude = []
+		
+		for i in range( self.sketch.profiles.count ):
+			profile = self.sketch.profiles.item( i )
+			areaProperties = profile.areaProperties()
+			
+			centreX = areaProperties.centroid.x
+			centreY = areaProperties.centroid.y
+			centre = ( centreX, centreY )
+			
+			if utility.IsXYInList( centre, self.centresToExtrude ):
+				self.profilesToExtrude.append( profile )
+				print( "Found profile for extrude: {}".format( centre ) )
+				
+			elif not utility.IsXYInList( centre, self.centresToIgnore ):
+				self.mainProfile = profile
+				print( "Found main profile: {}".format( centre ) )
+				
+			else:
+				print( "Ignored profile {}".format( centre ) )
 		
 	def Create( self, parent, constructionPlane, x, y ):
 		
@@ -55,61 +82,51 @@ class Sketch():
 			tabSize = length / tabCount
 			
 		return tabCount, tabSize
-	
-	def _ExtractMainProfile( self ):
-		lowerTabCentreY = self.lowerTabHeight / 2
-		
-		for i in range( self.sketch.profiles.count ):
-			profile = self.sketch.profiles.item( i )
-			areaProperties = profile.areaProperties()
-			middleX = areaProperties.centroid.x
-			middleY = areaProperties.centroid.y
 			
-			if not math.isclose( middleY, lowerTabCentreY ):
-				self.mainProfile = profile
-				return
-	
-	def _ExtractTabProfiles( self ):
-		targetCentreY = self.lowerTabHeight / 2
-		
-		for i in range( self.sketch.profiles.count ):
-			profile = self.sketch.profiles.item( i )
-			areaProperties = profile.areaProperties()
-			middleX = areaProperties.centroid.x
-			middleY = areaProperties.centroid.y
-			
-			if math.isclose( middleY, targetCentreY ):
-				for targetCentreX in self.lowerTabCentres:
-					if math.isclose( middleX, targetCentreX ):
-						self.lowerTabProfiles.append( profile )
-						break
-		
-	def _CreateTabs( self, count, length, height ):
-		self.lowerTabHeight = height
+	def _CreateTabs( self, length, height, xCount, yCount, xOffset = 0, yOffset = 0 ):
 		x = 0
+		for i in range( xCount ):
+			y = 0
+			for j in range( yCount ):
+				x = i * length + xOffset
+				x2 = x + length
+				
+				y = j * height + yOffset
+				y2 = y + height
+				
+				start = adsk.core.Point3D.create( x, y, 0 )
+				end = adsk.core.Point3D.create( x2, y2, 0 )
+				
+				self.sketch.sketchCurves.sketchLines.addTwoPointRectangle( start, end )
+				
+				centreX = ( start.x + end.x ) / 2
+				centreY = ( start.y + end.y ) / 2
+				centre = ( centreX, centreY )
+				
+				# We are only interested in extruding every other tab (so ignore evens)
+				if xCount > 1 and i % 2 != 0:
+					self.centresToExtrude.append( centre )
+					print( "Added Tab {} along X with centre {}".format( i, centre ) )
+				elif yCount > 1 and j % 2 != 0:
+					self.centresToExtrude.append( centre )
+					print( "Added Tab {} along Y with centre {}".format( j, centre ) )
+				else:
+					self.centresToIgnore.append( centre )
 		
-		for i in range( count ):
-			x2 = x + length
-			
-			start = adsk.core.Point3D.create( x, 0, 0 )
-			end = adsk.core.Point3D.create( x2, height, 0 )
-			
-			self.sketch.sketchCurves.sketchLines.addTwoPointRectangle( start, end )
-			
-			print( "Added Tab X:{} Y:{} -> X:{} Y:{}".format( x, 0, x2, height ) )
-			
-			# We are only interested in extruding every other tab (so ignore evens)
-			if i % 2 != 0:
-				centre = ( start.x + end.x ) / 2
-				self.lowerTabCentres.append( centre )
-				print( "Tab stored with a centre of: {}".format( centre ) )
-			
-			x = x2
-		
-	def AddTabsAlongBottom( self, height ):
-		
+	def AddTabsAlongBottom( self, materialThickness ):
 		count, length = self._CalculateTabLength( self.x )
-		self._CreateTabs( count, length, height )
+		self._CreateTabs( length, materialThickness, count, 1 )
 		
-		self._ExtractMainProfile()
-		self._ExtractTabProfiles()
+		self._AnalyseProfiles()
+		
+	def AddTabsAlongBottomAndSides( self, materialThickness ):
+		bCount, bLength = self._CalculateTabLength( self.x )
+		self._CreateTabs( bLength, materialThickness, bCount, 1 )
+		
+		sCount, sLength = self._CalculateTabLength( self.y - materialThickness )
+		self._CreateTabs( materialThickness, sLength, 1, sCount, yOffset = materialThickness )
+		
+		sCount, sLength = self._CalculateTabLength( self.y - materialThickness )
+		self._CreateTabs( materialThickness, sLength, 1, sCount, xOffset = self.x - materialThickness, yOffset = materialThickness )
+		
+		self._AnalyseProfiles()
