@@ -102,6 +102,8 @@ def Join( parent, partA, partB, axis, offset = 0 ):
 				jointInput.offset = adsk.core.ValueInput.createByReal( offset )
 				jointInput.isFlipped = not AreEdgesInTheSameDirection( edgeA, edgeB )
 				jointInput.setAsRigidJointMotion()
-				parent.joints.add( jointInput )
+				joint = parent.joints.add( jointInput )
+				
+				joint.name = "{} -> {}".format( partA.component.name, partB.component.name )
 				
 				return

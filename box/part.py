@@ -52,7 +52,7 @@ class Side():
 		
 		side.parent = self.parent
 		side.sketch = self.sketch
-		self.body = self.body
+		side.body = self.body
 		
 		transform = adsk.core.Matrix3D.create()
 		side.component = self.parent.occurrences.addExistingComponent( self.component, transform )
@@ -80,3 +80,16 @@ class Top():
 		
 		self.body = body.Body()
 		self.body.Extrude( self.component, self.sketch, -parameters.materialThickness )
+		
+	def Clone( self ):
+		top = Top()
+		
+		top.parent = self.parent
+		top.sketch = self.sketch
+		top.body = self.body
+		
+		transform = adsk.core.Matrix3D.create()
+		top.component = self.parent.occurrences.addExistingComponent( self.component, transform )
+		
+		return top
+		

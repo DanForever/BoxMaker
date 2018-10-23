@@ -48,6 +48,11 @@ class Execute( adsk.core.CommandEventHandler ):
 			top.Create( root, parameters )
 			joint.Join( root, base, top, adsk.core.Point3D.create( 1, 0, 0 ) )
 			
+			print( "\nCreating Top2:" )
+			top2 = top.Clone()
+			offset = ( parameters.length - parameters.materialThickness )
+			joint.Join( root, top2, top, adsk.core.Point3D.create( 0, 0, 1 ), offset )
+			
 		except:
 			import traceback
 			print( 'Execute.Notify() Exception:\n{}'.format( traceback.format_exc() ) )
