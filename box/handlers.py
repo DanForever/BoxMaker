@@ -90,16 +90,19 @@ class Create(adsk.core.CommandCreatedEventHandler):
 		try:
 			# Get the command that was created.
 			cmd = adsk.core.Command.cast( args.command )
-
+			
+			cmd.isExecutedWhenPreEmpted = False
+			cmd.okButtonText = "Create Box"
+			
 			# Get the CommandInputs collection associated with the command.
 			inputs = cmd.commandInputs
 			inputs.addStringValueInput( value.Inputs.RootComponentName.id, value.Inputs.RootComponentName.name )
-
+			
 			self.addValueInput( inputs, value.Inputs.MaterialThickness )
 			self.addValueInput( inputs, value.Inputs.BoxWidth )
 			self.addValueInput( inputs, value.Inputs.BoxLength )
 			self.addValueInput( inputs, value.Inputs.BoxHeight )
-
+			
 			self.executeHandler = Execute()
 			cmd.execute.add( self.executeHandler )
 			
