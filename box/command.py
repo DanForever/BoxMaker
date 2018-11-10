@@ -26,12 +26,8 @@ class Box():
         # Add the button to the bottom of the panel.
         addInsPanel.controls.addCommand( cmdDef )
         
-        self.ui.messageBox( 'Box Maker Started!' )
-        
     def Stop( self ):
         if self.ui:
-            self.ui.messageBox( 'Stop box maker' )
-        
             # Clean up the UI.
             cmdDef = self.ui.commandDefinitions.itemById( value.command.id )
             if cmdDef:
