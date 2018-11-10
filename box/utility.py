@@ -7,11 +7,9 @@ def CreateComponent( parent, name ):
 	# Create Component
 	identityTransform = adsk.core.Matrix3D.create()
 	occurrence = parent.occurrences.addNewComponent( identityTransform )
+	occurrence.component.name = name
 
-	component = occurrence.component
-	component.name = name
-
-	return component
+	return occurrence
 
 def IsFloatInList( float, list ):
 	for f in list:

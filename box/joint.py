@@ -2,11 +2,11 @@ import math
 
 import adsk.core
 
-def FindCurvesOnAxis( component, axis ):
+def FindCurvesOnAxis( occurrence, axis ):
 	edges = []
 	
-	for iB in range( component.bRepBodies.count ):
-		body = component.bRepBodies.item( iB )
+	for iB in range( occurrence.bRepBodies.count ):
+		body = occurrence.bRepBodies.item( iB )
 		
 		for iE in range( body.edges.count ):
 			edge = body.edges.item( iE )
@@ -63,16 +63,16 @@ def EdgeToString( edge ):
 
 def Join( parent, partA, partB, axis, offset = 0 ):
 	
-	print( "Joining {} -> {}".format( partA.component.name, partB.component.name ) )
+	print( "Joining {} -> {}".format( partA.occurrence.name, partB.occurrence.name ) )
 	
-	componentA = partA.component
-	componentB = partB.component
+	occurrenceA = partA.occurrence
+	occurrenceB = partB.occurrence
 	
-	edgesA = FindCurvesOnAxis( componentA, axis )
-	edgesB = FindCurvesOnAxis( componentB, axis )
+	edgesA = FindCurvesOnAxis( occurrenceA, axis )
+	edgesB = FindCurvesOnAxis( occurrenceB, axis )
 	
-	print( "Found {} edges on {} as potential joint targets".format( len( edgesA ), partA.component.name ) )
-	print( "Found {} edges on {} as potential joint targets".format( len( edgesB ), partB.component.name ) )
+	print( "Found {} edges on {} as potential joint targets".format( len( edgesA ), partA.occurrence.name ) )
+	print( "Found {} edges on {} as potential joint targets".format( len( edgesB ), partB.occurrence.name ) )
 	
 	for edgeA in edgesA:
 		for edgeB in edgesB:
@@ -81,10 +81,10 @@ def Join( parent, partA, partB, axis, offset = 0 ):
 			#(
 			#	"Comparing {} {}->{} against {} {}->{}".format
 			#	(
-			#		partA.component.name,
+			#		partA.occurrence.name,
 			#		VectorToString( edgeA.startVertex.geometry ),
 			#		VectorToString( edgeA.endVertex.geometry ),
-			#		partB.component.name,
+			#		partB.occurrence.name,
 			#		VectorToString( edgeB.startVertex.geometry ),
 			#		VectorToString( edgeB.endVertex.geometry ),
 			#	)
@@ -104,6 +104,6 @@ def Join( parent, partA, partB, axis, offset = 0 ):
 				jointInput.setAsRigidJointMotion()
 				joint = parent.joints.add( jointInput )
 				
-				joint.name = "{} -> {}".format( partA.component.name, partB.component.name )
+				joint.name = "{} -> {}".format( partA.occurrence.name, partB.occurrence.name )
 				
 				return
